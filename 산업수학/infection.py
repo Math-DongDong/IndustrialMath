@@ -14,43 +14,42 @@ with tap1:
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>감염병 디펜스 게임</title>
         <style>
-            /* 모바일 최적화 기본 설정 */
             * {
                 box-sizing: border-box;
-                -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
-                user-select: none; /* 텍스트 선택 방지 */
+                -webkit-tap-highlight-color: transparent;
+                user-select: none;
             }
 
             body {
                 margin: 0;
-                background-color: #ffffff; /* 배경색: 흰색 */
+                background-color: #ffffff;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: space-between; /* 상단, 중단, 하단 분배 */
-                height: 100vh; /* 화면 전체 높이 사용 */
+                justify-content: space-between;
+                height: 100vh;
                 font-family: 'Noto Sans KR', sans-serif;
-                overflow: hidden; /* 스크롤 방지 */
-                padding: 20px 0;
+                overflow: hidden;
+                padding: 10px 0 20px 0; /* 상단 여백 줄임 */
             }
 
-            /* 1. 상단 헤더 영역 */
+            /* 1. 상단 헤더 */
             .header-panel {
                 text-align: center;
                 width: 100%;
                 padding: 0 20px;
-                flex: 0 0 auto; /* 크기 고정 */
+                flex: 0 0 auto;
             }
 
             h2 {
-                margin: 0 0 10px 0;
+                margin: 0 0 5px 0;
                 color: #333;
-                font-size: 1.5rem;
+                font-size: 1.3rem; /* 모바일 고려 폰트 사이즈 조정 */
             }
 
             .status-bar {
                 background: #f5f5f5;
-                padding: 10px 15px;
+                padding: 8px 15px;
                 border-radius: 15px;
                 font-weight: bold;
                 color: #333;
@@ -59,7 +58,7 @@ with tap1:
                 align-items: center;
                 gap: 10px;
                 border: 1px solid #ddd;
-                font-size: 0.9rem;
+                font-size: 0.85rem;
                 width: 100%;
                 max-width: 400px;
             }
@@ -70,22 +69,22 @@ with tap1:
                 font-size: 1.1em;
             }
 
-            /* 2. 게임 캔버스 영역 */
+            /* 2. 캔버스 컨테이너 */
             .canvas-container {
-                flex: 1 1 auto; /* 남은 공간 모두 차지 */
+                flex: 1;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 width: 100%;
-                padding: 10px;
+                position: relative;
+                overflow: hidden; /* 넘침 방지 */
             }
 
             canvas {
-                /* 배경 그라데이션은 유지하되 조금 더 밝게 조정 */
                 background: linear-gradient(135deg, #e3f2fd, #bbdefb);
                 border-radius: 20px;
                 box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                touch-action: none; /* 캔버스 내 터치 시 스크롤 방지 */
+                touch-action: none;
                 border: 1px solid #e0e0e0;
             }
 
@@ -93,28 +92,28 @@ with tap1:
             .ui-panel {
                 flex: 0 0 auto;
                 width: 100%;
-                max-width: 500px;
-                padding: 0 20px 20px 20px;
+                max-width: 400px; /* 버튼 패널 너무 넓지 않게 */
+                padding: 0 20px;
                 display: flex;
                 gap: 15px;
                 justify-content: center;
             }
 
             .tool-btn {
-                flex: 1; /* 버튼 너비 균등 분배 */
+                flex: 1;
                 border: none;
-                padding: 15px 10px;
+                padding: 12px 10px;
                 border-radius: 15px;
-                font-size: 1rem;
+                font-size: 0.95rem;
                 font-weight: bold;
                 cursor: pointer;
                 transition: all 0.2s;
                 display: flex;
-                flex-direction: column; /* 아이콘 위, 텍스트 아래 */
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                gap: 5px;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                gap: 4px;
+                box-shadow: 0 3px 5px rgba(0,0,0,0.1);
             }
 
             .tool-btn:active {
@@ -128,7 +127,6 @@ with tap1:
                 box-shadow: none !important;
             }
 
-            /* 치료약 버튼 */
             #btn-cure {
                 background-color: #ffebee;
                 color: #c62828;
@@ -141,7 +139,6 @@ with tap1:
                 border-color: #ef5350;
             }
 
-            /* 백신 버튼 */
             #btn-vaccine {
                 background-color: #e8f5e9;
                 color: #2e7d32;
@@ -172,11 +169,11 @@ with tap1:
 
         <div class="ui-panel">
             <button id="btn-cure" class="tool-btn disabled" onclick="selectTool('cure')">
-                <span style="font-size: 1.5rem;">💊</span>
+                <span style="font-size: 1.4rem;">💊</span>
                 <span>치료약</span>
             </button>
             <button id="btn-vaccine" class="tool-btn disabled" onclick="selectTool('vaccine')">
-                <span style="font-size: 1.5rem;">💉</span>
+                <span style="font-size: 1.4rem;">💉</span>
                 <span>백신주사</span>
             </button>
         </div>
@@ -189,10 +186,11 @@ with tap1:
             const btnCure = document.getElementById('btn-cure');
             const btnVaccine = document.getElementById('btn-vaccine');
 
-            // 게임 설정 변수
-            const MAP_RADIUS = 6; // 모바일 화면 고려하여 맵 크기 약간 조정 (7 -> 6)
-            let HEX_RADIUS = 20; // 화면 크기에 따라 동적으로 변경됨
+            // --- 1. 맵 크기 조정 (잘림 방지) ---
+            // 기존 6 -> 5로 축소하여 모바일 화면에서 안정성 확보
+            const MAP_RADIUS = 5; 
             
+            let HEX_RADIUS = 20; 
             let hexagons = [];
             let currentTool = 'cure'; 
             let isGameRunning = true;
@@ -207,21 +205,31 @@ with tap1:
                 IMMUNE: 2
             };
 
-            // 캔버스 크기 및 육각형 크기 초기화 함수
+            // --- 2. 화면 크기 맞춤 로직 (핵심 수정) ---
             function resizeCanvas() {
                 const container = document.querySelector('.canvas-container');
-                // 컨테이너의 크기를 가져옴
-                const maxWidth = Math.min(container.clientWidth, 600); // 최대 600px 제한
-                const size = maxWidth - 20; // 여백 확보
+                
+                // 캔버스의 최대 크기를 화면 너비의 95% 또는 높이의 70% 중 작은 것으로 설정
+                // 이를 통해 가로 모드나 세로 모드 모두에서 잘리지 않도록 함
+                const maxWidth = container.clientWidth * 0.95;
+                const maxHeight = container.clientHeight * 0.95;
+                
+                // 정사각형 캔버스 크기 결정
+                const size = Math.min(maxWidth, maxHeight, 600); 
 
                 canvas.width = size;
                 canvas.height = size;
                 
-                // 화면 크기에 맞춰 육각형 반지름 계산
-                // 전체 너비 = 대략 (MAP_RADIUS * 2 + 1) * HEX_WIDTH
-                HEX_RADIUS = (size / 2) / (MAP_RADIUS * 1.8);
+                // [중요] 육각형 반지름 계산 공식 수정
+                // 맵 전체 너비 = (2 * MAP_RADIUS + 1) * sqrt(3) * R
+                // 안전 여백을 위해 1.8배수 대신 sqrt(3)(약 1.732) + 여백계수로 나눔
+                const gridWidthInHexes = (MAP_RADIUS * 2 + 1.5); 
+                HEX_RADIUS = (size / 2) / (gridWidthInHexes * 0.866); // 0.866은 sin(60) 즉 높이 비율
                 
-                // 맵 다시 그리기 (위치 재계산 필요)
+                // 더 안전하게: 가로 너비 기준으로 한번 더 체크하여 축소
+                const safeRadiusByWidth = (size / (2 * MAP_RADIUS + 2)) / Math.sqrt(3) * 2;
+                HEX_RADIUS = Math.min(HEX_RADIUS, safeRadiusByWidth);
+
                 initMap();
                 draw();
             }
@@ -234,7 +242,6 @@ with tap1:
                     this.calcPosition();
                 }
 
-                // 화면 리사이즈 시 위치 재계산을 위해 메서드 분리
                 calcPosition() {
                     const centerX = canvas.width / 2;
                     const centerY = canvas.height / 2;
@@ -243,15 +250,15 @@ with tap1:
                 }
 
                 draw() {
-                    // 좌표 재계산 (반응형 대응)
                     this.calcPosition();
 
                     ctx.beginPath();
                     for (let i = 0; i < 6; i++) {
                         const angle_deg = 60 * i - 30;
                         const angle_rad = Math.PI / 180 * angle_deg;
-                        const px = this.x + (HEX_RADIUS - 1.5) * Math.cos(angle_rad);
-                        const py = this.y + (HEX_RADIUS - 1.5) * Math.sin(angle_rad);
+                        // 육각형 사이 간격(GAP)을 위해 -1 정도 뺌
+                        const px = this.x + (HEX_RADIUS - 1) * Math.cos(angle_rad);
+                        const py = this.y + (HEX_RADIUS - 1) * Math.sin(angle_rad);
                         if (i === 0) ctx.moveTo(px, py);
                         else ctx.lineTo(px, py);
                     }
@@ -274,22 +281,21 @@ with tap1:
                     ctx.fill();
                     ctx.stroke();
 
-                    // 이모지 폰트 사이즈도 반응형으로
-                    const fontSize = Math.floor(HEX_RADIUS * 0.6);
+                    const fontSize = Math.floor(HEX_RADIUS * 0.65);
                     
                     if(this.state === STATE.INFECTED) {
                         ctx.font = `${fontSize}px Arial`;
                         ctx.fillStyle = 'white';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.fillText('👿', this.x, this.y + 2);
+                        ctx.fillText('👿', this.x, this.y + (HEX_RADIUS * 0.1));
                     }
                     if(this.state === STATE.IMMUNE) {
                         ctx.font = `${fontSize}px Arial`;
                         ctx.fillStyle = 'white';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.fillText('🛡️', this.x, this.y + 2);
+                        ctx.fillText('🛡️', this.x, this.y + (HEX_RADIUS * 0.1));
                     }
                 }
             }
@@ -308,7 +314,7 @@ with tap1:
             }
 
             function startGameSequence() {
-                resizeCanvas(); // 시작 시 크기 맞춤
+                resizeCanvas(); 
                 
                 setTimeout(() => {
                     isInputEnabled = true;
@@ -416,14 +422,13 @@ with tap1:
                 else btnVaccine.classList.add('active');
             }
 
-            // 입력 처리 (마우스 + 터치 통합)
             function handleInput(clientX, clientY) {
                 if (!isGameRunning || !isInputEnabled) return;
                 const rect = canvas.getBoundingClientRect();
                 const x = clientX - rect.left;
                 const y = clientY - rect.top;
                 
-                // 반응형 크기에 맞게 터치 범위 계산
+                // 반응형 터치 인식 범위 보정
                 const clickedHex = hexagons.find(h => Math.sqrt((h.x - x)**2 + (h.y - y)**2) < HEX_RADIUS);
 
                 if (clickedHex) {
@@ -435,16 +440,13 @@ with tap1:
                 }
             }
 
-            // 마우스 이벤트
             canvas.addEventListener('mousedown', (e) => handleInput(e.clientX, e.clientY));
             
-            // 터치 이벤트 (모바일)
             canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // 터치 시 스크롤 방지
+                e.preventDefault(); 
                 handleInput(e.touches[0].clientX, e.touches[0].clientY);
             }, {passive: false});
 
-            // 화면 크기 변경 시 캔버스 재조정
             window.addEventListener('resize', resizeCanvas);
 
             startGameSequence();
