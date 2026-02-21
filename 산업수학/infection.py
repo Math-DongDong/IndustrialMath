@@ -30,7 +30,7 @@ with tap1:
                 height: 100vh;
                 font-family: 'Noto Sans KR', sans-serif;
                 overflow: hidden;
-                padding: 10px 0 20px 0; /* 상단 여백 줄임 */
+                padding: 10px 0 20px 0;
             }
 
             /* 1. 상단 헤더 */
@@ -44,7 +44,7 @@ with tap1:
             h2 {
                 margin: 0 0 5px 0;
                 color: #333;
-                font-size: 1.3rem; /* 모바일 고려 폰트 사이즈 조정 */
+                font-size: 1.3rem;
             }
 
             .status-bar {
@@ -77,7 +77,7 @@ with tap1:
                 justify-content: center;
                 width: 100%;
                 position: relative;
-                overflow: hidden; /* 넘침 방지 */
+                overflow: hidden;
             }
 
             canvas {
@@ -92,7 +92,7 @@ with tap1:
             .ui-panel {
                 flex: 0 0 auto;
                 width: 100%;
-                max-width: 400px; /* 버튼 패널 너무 넓지 않게 */
+                max-width: 400px;
                 padding: 0 20px;
                 display: flex;
                 gap: 15px;
@@ -151,14 +151,80 @@ with tap1:
                 border-color: #66bb6a;
             }
 
+            /* --- [추가] 시작 화면 오버레이 --- */
+            #start-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(255, 255, 255, 0.85); /* 반투명 흰색 */
+                backdrop-filter: blur(5px); /* 배경 흐림 효과 */
+                z-index: 100;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .start-content {
+                background: white;
+                padding: 30px 40px;
+                border-radius: 20px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                border: 1px solid #eee;
+                width: 80%;
+                max-width: 300px;
+            }
+
+            .start-btn {
+                background: linear-gradient(45deg, #2196F3, #21CBF3);
+                color: white;
+                border: none;
+                padding: 15px 30px;
+                font-size: 1.2rem;
+                font-weight: bold;
+                border-radius: 50px;
+                cursor: pointer;
+                box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+                transition: transform 0.2s;
+                margin-top: 20px;
+                width: 100%;
+            }
+
+            .start-btn:active {
+                transform: scale(0.95);
+            }
+
+            .game-desc {
+                color: #666;
+                font-size: 0.9rem;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+
         </style>
     </head>
     <body>
 
+        <!-- 시작 화면 오버레이 -->
+        <div id="start-overlay">
+            <div class="start-content">
+                <div style="font-size: 3rem; margin-bottom: 10px;">🦠</div>
+                <h2 style="margin-top:0;">감염병 디펜스</h2>
+                <p class="game-desc" id="overlay-desc">
+                    치료약과 백신을 사용하여<br>
+                    바이러스를 막아내세요!
+                </p>
+                <button class="start-btn" onclick="startGame()">게임 시작</button>
+            </div>
+        </div>
+
         <div class="header-panel">
             <h2>감염병 디펜스</h2>
             <div class="status-bar">
-                <span id="status-text">준비 중... (3초)</span>
+                <span id="status-text">대기 중...</span>
                 <span>⏱ <span id="timer">05:00</span></span>
             </div>
         </div>
@@ -185,15 +251,15 @@ with tap1:
             const timerText = document.getElementById('timer');
             const btnCure = document.getElementById('btn-cure');
             const btnVaccine = document.getElementById('btn-vaccine');
+            const startOverlay = document.getElementById('start-overlay');
+            const overlayDesc = document.getElementById('overlay-desc');
 
-            // --- 1. 맵 크기 조정 (잘림 방지) ---
-            // 기존 6 -> 5로 축소하여 모바일 화면에서 안정성 확보
             const MAP_RADIUS = 5; 
             
             let HEX_RADIUS = 20; 
             let hexagons = [];
             let currentTool = 'cure'; 
-            let isGameRunning = true;
+            let isGameRunning = false; // 시작 전에는 false
             let isInputEnabled = false; 
             
             let timeLeft = 300; 
@@ -205,33 +271,28 @@ with tap1:
                 IMMUNE: 2
             };
 
-            // --- 2. 화면 크기 맞춤 로직 (핵심 수정) ---
             function resizeCanvas() {
                 const container = document.querySelector('.canvas-container');
-                
-                // 캔버스의 최대 크기를 화면 너비의 95% 또는 높이의 70% 중 작은 것으로 설정
-                // 이를 통해 가로 모드나 세로 모드 모두에서 잘리지 않도록 함
                 const maxWidth = container.clientWidth * 0.95;
                 const maxHeight = container.clientHeight * 0.95;
-                
-                // 정사각형 캔버스 크기 결정
                 const size = Math.min(maxWidth, maxHeight, 600); 
 
                 canvas.width = size;
                 canvas.height = size;
                 
-                // [중요] 육각형 반지름 계산 공식 수정
-                // 맵 전체 너비 = (2 * MAP_RADIUS + 1) * sqrt(3) * R
-                // 안전 여백을 위해 1.8배수 대신 sqrt(3)(약 1.732) + 여백계수로 나눔
                 const gridWidthInHexes = (MAP_RADIUS * 2 + 1.5); 
-                HEX_RADIUS = (size / 2) / (gridWidthInHexes * 0.866); // 0.866은 sin(60) 즉 높이 비율
+                HEX_RADIUS = (size / 2) / (gridWidthInHexes * 0.866); 
                 
-                // 더 안전하게: 가로 너비 기준으로 한번 더 체크하여 축소
                 const safeRadiusByWidth = (size / (2 * MAP_RADIUS + 2)) / Math.sqrt(3) * 2;
                 HEX_RADIUS = Math.min(HEX_RADIUS, safeRadiusByWidth);
 
-                initMap();
-                draw();
+                // 게임이 실행 중이 아닐 때도 맵을 그려서 배경에 보이게 함
+                if (!isGameRunning && hexagons.length === 0) {
+                    initMap();
+                } else if (hexagons.length > 0) {
+                    // 이미 맵이 있으면 위치만 재계산 (리사이즈 시)
+                    draw();
+                }
             }
 
             class Hexagon {
@@ -256,7 +317,6 @@ with tap1:
                     for (let i = 0; i < 6; i++) {
                         const angle_deg = 60 * i - 30;
                         const angle_rad = Math.PI / 180 * angle_deg;
-                        // 육각형 사이 간격(GAP)을 위해 -1 정도 뺌
                         const px = this.x + (HEX_RADIUS - 1) * Math.cos(angle_rad);
                         const py = this.y + (HEX_RADIUS - 1) * Math.sin(angle_rad);
                         if (i === 0) ctx.moveTo(px, py);
@@ -311,11 +371,34 @@ with tap1:
                 }
                 const centerHex = hexagons.find(h => h.q === 0 && h.r === 0);
                 if (centerHex) centerHex.state = STATE.INFECTED;
+                draw(); // 초기 맵 그리기
             }
 
-            function startGameSequence() {
-                resizeCanvas(); 
+            // --- 게임 시작 버튼 클릭 시 호출 ---
+            function startGame() {
+                startOverlay.style.display = 'none'; // 오버레이 숨김
                 
+                // 변수 초기화
+                initMap();
+                timeLeft = 300;
+                timerText.innerText = "05:00";
+                isGameRunning = true;
+                isInputEnabled = false;
+                
+                statusText.innerText = "준비 중... (3초)";
+                statusText.style.color = "#333";
+                
+                // 버튼 비활성화
+                btnCure.classList.add('disabled');
+                btnVaccine.classList.add('disabled');
+                btnCure.classList.remove('active');
+                btnVaccine.classList.remove('active');
+
+                // 게임 루프 시작
+                update();
+                draw();
+
+                // 3초 후 입력 활성화
                 setTimeout(() => {
                     isInputEnabled = true;
                     statusText.innerText = "치료 시작!";
@@ -336,6 +419,9 @@ with tap1:
             }
 
             function startTimer() {
+                // 기존 타이머 제거
+                if (timerInterval) clearInterval(timerInterval);
+
                 timerInterval = setInterval(() => {
                     timeLeft--;
                     timerText.innerText = formatTime(timeLeft);
@@ -352,22 +438,33 @@ with tap1:
                 isInputEnabled = false;
                 clearInterval(timerInterval);
                 
+                let message = "";
+                let color = "";
+
                 if (reason === "TIME_OVER") {
                     const infectedCount = hexagons.filter(h => h.state === STATE.INFECTED).length;
                     if (infectedCount > 0) {
-                        statusText.innerText = "시간 종료 (실패)";
-                        statusText.style.color = "red";
+                        message = "시간 종료 (실패)";
+                        overlayDesc.innerHTML = "시간이 종료되었습니다.<br>바이러스가 남아있네요 😭";
                     } else {
-                        statusText.innerText = "방역 성공!";
-                        statusText.style.color = "green";
+                        message = "방역 성공!";
+                        overlayDesc.innerHTML = "축하합니다!<br>시간 내에 방역에 성공했습니다 🎉";
                     }
                 } else if (reason === "ALL_INFECTED") {
-                    statusText.innerText = "게임 오버";
-                    statusText.style.color = "red";
+                    message = "게임 오버";
+                    overlayDesc.innerHTML = "모두 감염되었습니다.<br>다시 도전해보세요 😭";
                 } else if (reason === "VICTORY") {
-                    statusText.innerText = "바이러스 박멸!";
-                    statusText.style.color = "green";
+                    message = "바이러스 박멸!";
+                    overlayDesc.innerHTML = "완벽합니다!<br>모든 바이러스를 없앴습니다 🎉";
                 }
+
+                statusText.innerText = message;
+                
+                // 결과 화면 표시 (약간의 딜레이 후)
+                setTimeout(() => {
+                    startOverlay.style.display = 'flex';
+                    document.querySelector('.start-btn').innerText = "다시 하기";
+                }, 1000);
             }
 
             function update() {
@@ -428,7 +525,6 @@ with tap1:
                 const x = clientX - rect.left;
                 const y = clientY - rect.top;
                 
-                // 반응형 터치 인식 범위 보정
                 const clickedHex = hexagons.find(h => Math.sqrt((h.x - x)**2 + (h.y - y)**2) < HEX_RADIUS);
 
                 if (clickedHex) {
@@ -449,14 +545,16 @@ with tap1:
 
             window.addEventListener('resize', resizeCanvas);
 
-            startGameSequence();
+            // 초기 화면 설정 (게임 자동 시작 안 함)
+            resizeCanvas();
+            initMap();
 
         </script>
     </body>
     </html>
     '''
 
-    components.html(html_code, height=800, scrolling=True)
+    components.html(html_code, height=600, scrolling=True)
 with tap2:
     st.header("감염병의 확산 예측")
     st.write("감염병의 확산 예측은 감염병이 어떻게 퍼질지 예측하는 것입니다. 이를 위해 수학적 모델링과 시뮬레이션이 사용됩니다. 감염병의 확산을 예측하는 것은 공중 보건 정책을 수립하고, 자원을 효율적으로 배분하는 데 중요합니다.")
