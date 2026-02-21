@@ -10,6 +10,7 @@ st.set_page_config(
 # 2. 메뉴바 설정(각 페이지의 실제 콘텐츠는 별도의 파일에 존재).
 pages = {
     "산업수학": [
+        st.page("./산업수학/infection.py", title="감염병의 확산 예측"),
         st.Page("./산업수학/MedicalData.py", title="의료 데이터와 건강 상태"),
         st.Page("./산업수학/DistanceOptimization.py", title="원자력 발전소 기중기의 이동 경로 최적화"),
     ],    
@@ -19,6 +20,5 @@ pages = {
 pg = st.navigation(pages)
 
 # 4. 사용자가 선택한 페이지 실행
-
 pg.run()
 
