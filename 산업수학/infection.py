@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 
 st.title("감염병의 확산 예측")
 
-tap1,tap2 = st.tabs(["감염병 게임","감염병의 확산 예측"])
+tap1,tap2 = st.tabs(["감염병 디펜","감염병의 확산 예측"])
 
 with tap1: 
     html_code='''
@@ -151,15 +151,15 @@ with tap1:
                 border-color: #66bb6a;
             }
 
-            /* --- [추가] 시작 화면 오버레이 --- */
+            /* 시작 화면 오버레이 */
             #start-overlay {
                 position: absolute;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background-color: rgba(255, 255, 255, 0.85); /* 반투명 흰색 */
-                backdrop-filter: blur(5px); /* 배경 흐림 효과 */
+                background-color: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(5px);
                 z-index: 100;
                 display: flex;
                 flex-direction: column;
@@ -202,6 +202,18 @@ with tap1:
                 font-size: 0.9rem;
                 margin-bottom: 20px;
                 line-height: 1.5;
+            }
+            
+            /* 플레이 시간 강조 스타일 */
+            .play-time {
+                display: inline-block;
+                margin-top: 15px;
+                padding: 5px 10px;
+                background-color: #f1f8e9;
+                border-radius: 8px;
+                color: #33691e;
+                font-weight: bold;
+                font-size: 0.95rem;
             }
 
         </style>
@@ -259,10 +271,11 @@ with tap1:
             let HEX_RADIUS = 20; 
             let hexagons = [];
             let currentTool = 'cure'; 
-            let isGameRunning = false; // 시작 전에는 false
+            let isGameRunning = false; 
             let isInputEnabled = false; 
             
-            let timeLeft = 300; 
+            const TOTAL_TIME = 300; // 5분
+            let timeLeft = TOTAL_TIME; 
             let timerInterval;
 
             const STATE = {
@@ -286,11 +299,9 @@ with tap1:
                 const safeRadiusByWidth = (size / (2 * MAP_RADIUS + 2)) / Math.sqrt(3) * 2;
                 HEX_RADIUS = Math.min(HEX_RADIUS, safeRadiusByWidth);
 
-                // 게임이 실행 중이 아닐 때도 맵을 그려서 배경에 보이게 함
                 if (!isGameRunning && hexagons.length === 0) {
                     initMap();
                 } else if (hexagons.length > 0) {
-                    // 이미 맵이 있으면 위치만 재계산 (리사이즈 시)
                     draw();
                 }
             }
@@ -371,16 +382,14 @@ with tap1:
                 }
                 const centerHex = hexagons.find(h => h.q === 0 && h.r === 0);
                 if (centerHex) centerHex.state = STATE.INFECTED;
-                draw(); // 초기 맵 그리기
+                draw(); 
             }
 
-            // --- 게임 시작 버튼 클릭 시 호출 ---
             function startGame() {
-                startOverlay.style.display = 'none'; // 오버레이 숨김
+                startOverlay.style.display = 'none'; 
                 
-                // 변수 초기화
                 initMap();
-                timeLeft = 300;
+                timeLeft = TOTAL_TIME;
                 timerText.innerText = "05:00";
                 isGameRunning = true;
                 isInputEnabled = false;
@@ -388,17 +397,14 @@ with tap1:
                 statusText.innerText = "준비 중... (3초)";
                 statusText.style.color = "#333";
                 
-                // 버튼 비활성화
                 btnCure.classList.add('disabled');
                 btnVaccine.classList.add('disabled');
                 btnCure.classList.remove('active');
                 btnVaccine.classList.remove('active');
 
-                // 게임 루프 시작
                 update();
                 draw();
 
-                // 3초 후 입력 활성화
                 setTimeout(() => {
                     isInputEnabled = true;
                     statusText.innerText = "치료 시작!";
@@ -419,7 +425,6 @@ with tap1:
             }
 
             function startTimer() {
-                // 기존 타이머 제거
                 if (timerInterval) clearInterval(timerInterval);
 
                 timerInterval = setInterval(() => {
@@ -438,29 +443,36 @@ with tap1:
                 isInputEnabled = false;
                 clearInterval(timerInterval);
                 
+                // 플레이 시간 계산 (총 시간 - 남은 시간)
+                const playedTimeSeconds = TOTAL_TIME - timeLeft;
+                const playedTimeFormatted = formatTime(playedTimeSeconds);
+                
                 let message = "";
-                let color = "";
+                let descHtml = "";
 
                 if (reason === "TIME_OVER") {
                     const infectedCount = hexagons.filter(h => h.state === STATE.INFECTED).length;
                     if (infectedCount > 0) {
                         message = "시간 종료 (실패)";
-                        overlayDesc.innerHTML = "시간이 종료되었습니다.<br>바이러스가 남아있네요 😭";
+                        descHtml = `시간이 종료되었습니다.<br>바이러스가 남아있네요 😭`;
                     } else {
                         message = "방역 성공!";
-                        overlayDesc.innerHTML = "축하합니다!<br>시간 내에 방역에 성공했습니다 🎉";
+                        descHtml = `축하합니다!<br>시간 내에 방역에 성공했습니다 🎉`;
                     }
                 } else if (reason === "ALL_INFECTED") {
                     message = "게임 오버";
-                    overlayDesc.innerHTML = "모두 감염되었습니다.<br>다시 도전해보세요 😭";
+                    descHtml = `모두 감염되었습니다.<br>다시 도전해보세요 😭`;
                 } else if (reason === "VICTORY") {
                     message = "바이러스 박멸!";
-                    overlayDesc.innerHTML = "완벽합니다!<br>모든 바이러스를 없앴습니다 🎉";
+                    descHtml = `완벽합니다!<br>모든 바이러스를 없앴습니다 🎉`;
                 }
 
+                // 플레이 시간 추가
+                descHtml += `<br><span class="play-time">⏱ 플레이 시간: ${playedTimeFormatted}</span>`;
+
                 statusText.innerText = message;
+                overlayDesc.innerHTML = descHtml;
                 
-                // 결과 화면 표시 (약간의 딜레이 후)
                 setTimeout(() => {
                     startOverlay.style.display = 'flex';
                     document.querySelector('.start-btn').innerText = "다시 하기";
@@ -545,7 +557,6 @@ with tap1:
 
             window.addEventListener('resize', resizeCanvas);
 
-            // 초기 화면 설정 (게임 자동 시작 안 함)
             resizeCanvas();
             initMap();
 
@@ -554,7 +565,7 @@ with tap1:
     </html>
     '''
 
-    components.html(html_code, height=550, scrolling=True)
+    components.html(html_code, height=800, scrolling=True)
 with tap2:
     st.header("감염병의 확산 예측")
     st.write("감염병의 확산 예측은 감염병이 어떻게 퍼질지 예측하는 것입니다. 이를 위해 수학적 모델링과 시뮬레이션이 사용됩니다. 감염병의 확산을 예측하는 것은 공중 보건 정책을 수립하고, 자원을 효율적으로 배분하는 데 중요합니다.")
