@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 
 st.title("감염병의 확산 예측")
 
-tap1,tap2 = st.tabs(["감염병 디펜","감염병의 확산 예측"])
+tap1,tap2 = st.tabs(["감염병 디펜스","감염병의 확산 예측"])
 
 with tap1: 
     html_code='''
