@@ -554,7 +554,7 @@ with tap1:
     </html>
     '''
 
-    components.html(html_code, height=600, scrolling=True)
+    components.html(html_code, height=550, scrolling=True)
 with tap2:
     st.header("감염병의 확산 예측")
     st.write("감염병의 확산 예측은 감염병이 어떻게 퍼질지 예측하는 것입니다. 이를 위해 수학적 모델링과 시뮬레이션이 사용됩니다. 감염병의 확산을 예측하는 것은 공중 보건 정책을 수립하고, 자원을 효율적으로 배분하는 데 중요합니다.")
