@@ -234,7 +234,7 @@ html_code='''
         <h2>감염병 디펜스</h2>
         <div class="status-bar">
             <span id="status-text">대기 중...</span>
-            <span>⏱ <span id="timer">05:00</span></span>
+            <span>⏱ <span id="timer">03:00</span></span>
         </div>
     </div>
 
@@ -271,7 +271,7 @@ html_code='''
         let isGameRunning = false; 
         let isInputEnabled = false; 
         
-        const TOTAL_TIME = 300; // 5분
+        const TOTAL_TIME = 180; // 3분
         let timeLeft = TOTAL_TIME; 
         let timerInterval;
 
@@ -308,6 +308,7 @@ html_code='''
                 this.q = q;
                 this.r = r;
                 this.state = STATE.HEALTHY;
+                this.vaccineTime = null; // 백신 적용 시간 (null: 백신 미적용)
                 this.calcPosition();
             }
 
@@ -337,8 +338,14 @@ html_code='''
                     ctx.strokeStyle = '#b71c1c';
                     ctx.lineWidth = 2;
                 } else if (this.state === STATE.IMMUNE) {
-                    ctx.fillStyle = '#66bb6a';
-                    ctx.strokeStyle = '#1b5e20';
+                    // 백신 효과 페이드 아웃: 30초에 걸쳐 점점 흐려짐
+                    let opacity = 1;
+                    if (this.vaccineTime !== null) {
+                        const elapsedTime = (Date.now() - this.vaccineTime) / 1000;
+                        opacity = Math.max(0, 1 - (elapsedTime / 30)); // 30초에 걸쳐 0으로 감소
+                    }
+                    ctx.fillStyle = `rgba(102, 187, 106, ${opacity * 0.8})`;
+                    ctx.strokeStyle = `rgba(27, 94, 32, ${opacity})`;
                     ctx.lineWidth = 2;
                 } else {
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
@@ -387,7 +394,7 @@ html_code='''
             
             initMap();
             timeLeft = TOTAL_TIME;
-            timerText.innerText = "05:00";
+            timerText.innerText = "03:00";
             isGameRunning = true;
             isInputEnabled = false;
             
@@ -479,6 +486,17 @@ html_code='''
         function update() {
             if (!isGameRunning) return;
 
+            // 백신 효과 시간 체크: 30초 경과 시 면역 상태 해제
+            hexagons.forEach(hex => {
+                if (hex.state === STATE.IMMUNE && hex.vaccineTime !== null) {
+                    const elapsedSeconds = (Date.now() - hex.vaccineTime) / 1000;
+                    if (elapsedSeconds >= 30) {
+                        hex.state = STATE.HEALTHY;
+                        hex.vaccineTime = null;
+                    }
+                }
+            });
+
             const infectedHexes = hexagons.filter(h => h.state === STATE.INFECTED);
 
             infectedHexes.forEach(infected => {
@@ -541,6 +559,7 @@ html_code='''
                     clickedHex.state = STATE.HEALTHY;
                 } else if (currentTool === 'vaccine' && clickedHex.state === STATE.HEALTHY) {
                     clickedHex.state = STATE.IMMUNE;
+                    clickedHex.vaccineTime = Date.now(); // 백신 적용 시간 기록
                 }
             }
         }
