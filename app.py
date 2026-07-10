@@ -13,6 +13,7 @@ pages = {
         st.Page("./산업수학/infection.py", title="감염병 디펜스"),
         st.Page("./산업수학/MedicalData.py", title="의료 데이터와 건강 상태"),
         st.Page("./산업수학/DistanceOptimization.py", title="원자력 발전소 기중기의 이동 경로 최적화"),
+        st.Page("./Monitor.py", title="리소스 관리"),
     ],    
 }
 
