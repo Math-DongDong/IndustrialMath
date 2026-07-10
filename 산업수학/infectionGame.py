@@ -21,25 +21,26 @@ html_code='''
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            height: 100vh;
+            justify-content: flex-start; /* 상단에 붙도록 변경 */
+            min-height: 100vh;
             font-family: 'Noto Sans KR', sans-serif;
             overflow: hidden;
-            padding: 10px 0 20px 0;
+            padding: 8px 0 12px 0; /* 전체 패딩 축소 */
         }
 
         /* 1. 상단 헤더 */
         .header-panel {
             text-align: center;
             width: 100%;
-            padding: 0 20px;
+            padding: 4px 12px; /* 헤더 패딩 축소 */
             flex: 0 0 auto;
+            margin-bottom: 6px; /* 캔버스와 더 가깝게 */
         }
 
         h2 {
-            margin: 0 0 5px 0;
+            margin: 0 0 4px 0;
             color: #333;
-            font-size: 1.3rem;
+            font-size: 1.25rem;
         }
 
         .status-bar {
@@ -58,6 +59,21 @@ html_code='''
             max-width: 400px;
         }
 
+        /* 추가: 상태바와 캔버스 사이 간격을 더 줄임 */
+        @media (min-width: 1000px) {
+            .header-panel { margin-bottom: 10px; }
+            .status-bar { padding: 6px 12px; font-size: 0.9rem; max-width: 520px; }
+            .canvas-container { margin-top: 6px; }
+        }
+        @media (max-width: 600px) {
+            body { padding-top: 2px; }
+            .header-panel { margin-bottom: 0; }
+            .status-bar { padding: 6px 8px; font-size: 0.85rem; max-width: 92%; }
+            /* 모바일: 캔버스가 헤더와 겹치지 않도록 작은 양의 여백 유지 */
+            .canvas-container { margin-top: 4px; max-height: 360px; padding-top: 4px; padding-bottom: 8px; }
+            canvas { max-height: 100%; height: auto; display: block; }
+        }
+
         #timer {
             color: #d32f2f;
             font-family: monospace;
@@ -73,6 +89,7 @@ html_code='''
             width: 100%;
             position: relative;
             overflow: hidden;
+            padding-bottom: 16px; /* 하단 버튼과 캔버스 간격을 좁힘 */
         }
 
         canvas {
@@ -81,21 +98,30 @@ html_code='''
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             touch-action: none;
             border: 1px solid #e0e0e0;
+            display: block;
+            max-width: 100%;
+            height: auto;
         }
 
         /* 3. 하단 컨트롤 패널 */
         .ui-panel {
-            flex: 0 0 auto;
-            width: 100%;
-            max-width: 400px;
-            padding: 0 20px;
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(720px, 96%);
+            max-width: 720px;
+            padding: 6px 12px;
             display: flex;
-            gap: 15px;
-            justify-content: center;
+            gap: 12px;
+            justify-content: space-between; /* 버튼을 양끝에 붙이고 간격 유지 */
+            z-index: 150;
         }
 
         .tool-btn {
-            flex: 1;
+            flex: 1 1 48%;
+            min-width: 120px;
+            max-width: 360px;
             border: none;
             padding: 12px 10px;
             border-radius: 15px;
@@ -109,6 +135,49 @@ html_code='''
             justify-content: center;
             gap: 4px;
             box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .canvas-container {
+                padding-bottom: 8px; /* 모바일에서 버튼과 캔버스 간격 축소 */
+            }
+            .ui-panel {
+                bottom: 6px; /* 버튼을 화면 하단에서 더 위로 이동 */
+                width: 92%;
+                gap: 8px;
+                padding: 6px 8px;
+            }
+            .tool-btn {
+                min-width: 120px;
+                font-size: 0.95rem;
+                padding: 10px 8px;
+            }
+        }
+
+        @media (min-width: 1000px) {
+            .canvas-container {
+                padding-bottom: 48px; /* 데스크탑에서는 버튼을 더 아래로 이동 */
+                max-height: 360px; /* 데스크탑에서 캔버스 최대 높이 더 축소 */
+            }
+            .ui-panel {
+                bottom: 32px;
+                width: min(900px, 80%);
+                gap: 24px;
+                padding: 10px 18px;
+            }
+            .tool-btn {
+                min-width: 220px;
+                max-width: 420px;
+                border-radius: 18px;
+                flex-direction: row; /* 아이콘과 텍스트를 한 줄로 */
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                padding: 14px 18px;
+            }
+            .tool-btn > span:first-child { font-size: 1.6rem; }
+            .tool-btn > span:last-child { font-size: 1.05rem; font-weight: 700; color: #555; }
         }
 
         .tool-btn:active {
@@ -396,7 +465,7 @@ html_code='''
             isGameRunning = true;
             isInputEnabled = false;
             
-            statusText.innerText = "준비 중... (3초)";
+            statusText.innerText = "준비 중... (5초)";
             statusText.style.color = "#333";
             
             btnCure.classList.add('disabled');
@@ -407,7 +476,7 @@ html_code='''
             update();
             draw();
 
-            setTimeout(() => {
+                setTimeout(() => {
                 isInputEnabled = true;
                 statusText.innerText = "치료 시작!";
                 statusText.style.color = "#1976d2";
@@ -417,7 +486,7 @@ html_code='''
                 selectTool('cure');
 
                 startTimer();
-            }, 3000);
+            }, 5000);
         }
 
         function formatTime(seconds) {
@@ -579,4 +648,4 @@ html_code='''
 </html>
 '''
 
-components.html(html_code, height=800, scrolling=True)
+components.html(html_code, height=530, scrolling=True)  
