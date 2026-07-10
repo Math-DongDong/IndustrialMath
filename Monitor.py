@@ -14,8 +14,8 @@ def login_modal():
     password = st.text_input("비밀번호", type="password")
     
     if st.button("확인", type="primary", use_container_width=True):
-        # secrets.toml 파일에서 비밀번호를 가져옵니다. (기본값: admin)
-        correct_password = st.secrets.get("monitor_password", "admin")
+        # secrets.toml 파일에서 비밀번호를 가져옵니다.
+        correct_password = st.secrets.get("monitor_password", "")
         
         if password == correct_password:
             st.session_state.authenticated = True
