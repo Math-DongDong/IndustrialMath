@@ -1,8 +1,6 @@
 import streamlit as st  
 import streamlit.components.v1 as components
 
-st.title("감염병 디펜스")
-
 html_code='''
 <!DOCTYPE html>
 <html lang="ko">
